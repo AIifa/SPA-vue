@@ -1,16 +1,21 @@
+// import { response } from "express";
+
 export default {
     namespaced: true,
     state: {
         taskList: [],
-        count: 0
+        count: 0,
+        url: "http://localhost:3000"
     },
     getters: {
         taskList(state) {
             return state.taskList;
         },
         count(state) {
-
             return state.count;
+        },
+        url(state) {
+            return state.url;
         },
     },
     mutations: {
@@ -25,16 +30,16 @@ export default {
 
             localStorage.setItem("taskList", JSON.stringify(state.taskList));
             localStorage.setItem("count", state.count);
-        },
-        addNewSubTask(state, id) {
-            let pos = state.taskList.map((el) => el.id).indexOf(id);
-            console.log("modules/taskList/addNewSubTask/pos " + pos)
-            if (pos !== -1) {
-                console.log("modules/taskList/addNewSubTask/if " + pos)
-                state.taskList[pos].subTaskList.push("New subtask");
-            }
 
-            localStorage.setItem("taskList", JSON.stringify(state.taskList));
+            fetch(state.url + '/insertTask', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({ id: state.count, title: someText })
+            })
+                .then(response => response.json())
+                .then(result => console.log("insert task"))
         },
         delTask(state, id) {
             let pos = state.taskList.map((el) => el.id).indexOf(id);
@@ -45,29 +50,51 @@ export default {
             }
 
             localStorage.setItem("taskList", JSON.stringify(state.taskList));
-        },
-        delSubTask(state, payload) {
-            let pos = state.taskList.map((el) => el.id).indexOf(payload.id);
-            console.log("modules/taskList/delSubTask/pos " + pos)
-            if (pos !== -1) {
-                console.log("modules/taskList/delSubTask/if " + pos)
-                state.taskList[pos].subTaskList.splice(payload.ind, 1);
-                state.taskList[pos].performedList.splice(payload.ind, 1);
-            }
 
-            localStorage.setItem("taskList", JSON.stringify(state.taskList));
+            fetch(state.url + '/deleteTask', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({ id: id })
+            })
+                .then(response => response.json())
+                .then(result => console.log("delete task"))
         },
         updateTaskList(state, payload) {
             let index = state.taskList.map((el) => el.id).indexOf(payload.id);
             console.log("modules/taskList/updateTaskList/pos " + index)
+
+
+            // 2 цикл проверки что добавлено/удалено
+            let idSubTask = []
+            let task = state.taskList[index]
+
+            for (let i = 0; i < task.subTaskList.length; ++i) {
+                let posSubTask = payload.subTaskList.indexOf(task.subTaskList[i])
+
+                if (posSubTask == -1) {
+                    idSubTask.push(i)
+                }
+            }
+
             if (index !== -1) {
                 console.log("modules/taskList/updateTaskList/if " + index)
                 state.taskList[index].title = payload.title
                 state.taskList[index].subTaskList = payload.subTaskList
                 state.taskList[index].performedList = payload.performedList
             }
-
             localStorage.setItem("taskList", JSON.stringify(state.taskList));
+            console.log(idSubTask)
+            fetch(state.url + '/updateTask', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({ task: state.taskList[index], id: idSubTask })
+            })
+                .then(response => response.json())
+                .then(result => console.log("update task"))
         },
 
         setLocalStorageList(state, payload) {
@@ -75,30 +102,21 @@ export default {
             state.taskList = JSON.parse(localStorage.getItem("taskList"))
             state.count = Number(localStorage.getItem("count"))
         },
-        setTaskList(state, payload) {
-            state.taskList = JSON.parse(JSON.stringify(payload))
-        },
-
-        setList(state, payload) {
-            state.taskList = payload
-        },
+        fetchList(state, payload) {
+            state.taskList = payload.dataList
+            state.count = payload.count
+            localStorage.setItem("taskList", JSON.stringify(state.taskList));
+            localStorage.setItem("count", state.count);
+        }
     },
     actions: {
         addNewTask(store, someText) {
             console.log("modules/taskList/addNewTask " + someText)
             store.commit('addNewTask', someText)
         },
-        addNewSubTask(store, id) {
-            console.log("modules/taskList/addNewSubTask/id " + id)
-            store.commit('addNewTask', id)
-        },
         delTask(store, id) {
             console.log("modules/taskList/delTask/id " + id)
             store.commit('delTask', id)
-        },
-        delSubTask(store, payload) {
-            console.log("modules/taskList/delSubTask/ind+id " + payload.ind + "/" + payload.id)
-            store.commit('delTask', payload)
         },
         updateTaskList(store, payload) {
             console.log("modules/taskList/updateTaskList/id " + payload.id)
@@ -111,9 +129,10 @@ export default {
             console.log("modules/taskList/setLocalStorageList " + payload)
             store.commit('setLocalStorageList', payload)
         },
-        setTaskList(store, payload) {
-            console.log("modules/taskList/setTaskList " + payload)
-            store.commit('setTaskList', payload)
-        },
+        fetchList(store, payload) {
+            console.log(payload)
+            console.log("modules/taskList/fetchList " + payload)
+            store.commit('fetchList', payload)
+        }
     },
 };

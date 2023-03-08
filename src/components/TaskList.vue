@@ -27,7 +27,8 @@
                 </v-btn>
               </v-row>
               <v-row v-for="n in 2" :key="n">
-                <v-checkbox class="curDef"
+                <v-checkbox
+                  class="curDef"
                   v-if="task.subTaskList[n - 1]"
                   readonly
                   :ripple="false"
@@ -64,7 +65,6 @@ import { mapGetters, mapActions } from "vuex";
 import TaskMenu from "./TaskMenu.vue";
 import AddDialog from "./AddDialog.vue";
 import DelDialog from "./DelDialog.vue";
-import { GET_TODO } from '../main.js';
 
 export default {
   name: "TaskList",
@@ -75,7 +75,7 @@ export default {
   },
   data: () => ({
     taskId: null,
-    action: ""
+    action: "",
   }),
   computed: {
     ...mapGetters({
@@ -84,6 +84,7 @@ export default {
       delDialog: "delMenu/dialog",
       count: "taskList/count",
       taskList: "taskList/taskList",
+      url: "taskList/url",
     }),
   },
   methods: {
@@ -92,7 +93,7 @@ export default {
       changeDelDialog: "delMenu/changeDialog",
       changeAddDialog: "addMenu/changeDialog",
       setLocalStorageList: "taskList/setLocalStorageList",
-      fetchList: "taskList/fetchList"
+      fetchList: "taskList/fetchList",
     }),
 
     createNewTask() {
@@ -106,27 +107,27 @@ export default {
     openDeleteTask(task_id) {
       this.taskId = task_id;
       console.log("Vue/TaskList/openDeleteTask/task_id " + this.taskId);
-      this.action = "удалить"
+      this.action = "удалить";
       this.changeDelDialog(true);
     },
   },
   mounted() {
-    if (!localStorage.getItem('taskList')) {
-      // this.fetchList()
-      localStorage.setItem("taskList", JSON.stringify(this.taskList));
-      localStorage.setItem("count", this.count);
-      console.log("Set local storage data");
-    }
-    else {
-      this.setLocalStorageList(JSON.parse(localStorage.getItem("taskList")))
+    if (!localStorage.getItem("taskList")) {
+      fetch(this.url)
+        .then((response) => response.json())
+        .then((data) => this.fetchList(data));
+
+      // localStorage.setItem("taskList", JSON.stringify(this.taskList));
+      // localStorage.setItem("count", this.count);
+      // console.log("Set local storage data");
+    } else {
+      this.setLocalStorageList(JSON.parse(localStorage.getItem("taskList")));
       console.log("Get local storage data");
     }
+
     console.log("Vue/TaskList/mounted/taskList " + this.taskList);
-
   },
-  updated(){
-
-  }
+  updated() {},
 };
 </script>
 

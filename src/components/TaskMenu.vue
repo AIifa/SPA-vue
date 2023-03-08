@@ -81,7 +81,7 @@
           <v-row>
             <v-spacer></v-spacer>
             <v-col cols="2">
-              <v-btn fab small color="success" @click="createNewTask()">
+              <v-btn fab small color="success" @click="createNewSubTask()">
                 <v-icon dark>mdi-plus</v-icon>
               </v-btn>
             </v-col>
@@ -165,7 +165,7 @@ export default {
       this.copyTask.subTaskList.splice(task_index, 1);
       this.copyTask.performedList.splice(task_index, 1);
     },
-    createNewTask() {
+    createNewSubTask() {
       // 4 undo
       this.undoStackAction.push({
         id: 4,
@@ -175,13 +175,14 @@ export default {
       });
       this.redoStackAction = [];
 
-      console.log("Vue/TaskMenu/createNewTask " + this.copyTask.subTaskList);
+      console.log("Vue/TaskMenu/createNewSubTask " + this.copyTask.subTaskList);
 
       this.copyTask.subTaskList.push("New Subtask");
       this.copyTask.performedList.push(false);
     },
     saveTask() {
       this.updateTaskList(this.copyTask);
+      
       this.changeDialog(false);
 
       console.log("Vue/TaskMenu/saveTask ");
