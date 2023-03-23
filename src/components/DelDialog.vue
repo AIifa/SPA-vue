@@ -42,10 +42,7 @@ export default {
       
     }),
     yesAcception() {
-      // console.log(this.action)
       if (this.action == "удалить") {
-        // console.log("Vue/DelDialog/yesAcception/True " + this.taskId)
-        
         console.log("Vue/DelDialog/yesAcception/True " + this.action)
         this.delTask(this.taskId);
       }

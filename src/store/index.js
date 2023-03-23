@@ -14,7 +14,6 @@ export default new Vuex.Store({
 		taskList,
 		addMenu,
 		delMenu,
-    
 	},
 	strict: process.env.NODE_ENV !== 'production'
 })

@@ -1,11 +1,12 @@
-// import { response } from "express";
+import gql from 'graphql-tag'
+import { apolloClient } from '../../apolloClient';
 
 export default {
     namespaced: true,
     state: {
         taskList: [],
         count: 0,
-        url: "http://localhost:3000"
+        url: "http://localhost:3000",
     },
     getters: {
         taskList(state) {
@@ -28,18 +29,25 @@ export default {
                 performedList: []
             });
 
+            const INSERT_TASK = gql`
+                mutation insertTask($id: Int!, $title: String!){
+                    insertTask(id: $id, title: $title){
+                        str
+                    }
+                }
+            `
+            apolloClient.mutate({
+                mutation: INSERT_TASK,
+                variables: {
+                    id: state.count,
+                    title: someText
+                }
+            }).then(( data ) => {
+                console.log(data)
+            })
+
             localStorage.setItem("taskList", JSON.stringify(state.taskList));
             localStorage.setItem("count", state.count);
-
-            fetch(state.url + '/insertTask', {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json;charset=utf-8'
-                },
-                body: JSON.stringify({ id: state.count, title: someText })
-            })
-                .then(response => response.json())
-                .then(result => console.log("insert task"))
         },
         delTask(state, id) {
             let pos = state.taskList.map((el) => el.id).indexOf(id);
@@ -49,24 +57,28 @@ export default {
                 state.taskList.splice(pos, 1);
             }
 
-            localStorage.setItem("taskList", JSON.stringify(state.taskList));
-
-            fetch(state.url + '/deleteTask', {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json;charset=utf-8'
-                },
-                body: JSON.stringify({ id: id })
+            const DELETE_TASK = gql`
+                mutation deleteTask($id: Int!){
+                    deleteTask(id: $id){
+                        str
+                    }
+                }
+            `
+            apolloClient.mutate({
+                mutation: DELETE_TASK,
+                variables: {
+                    id: id
+                }
+            }).then(( data ) => {
+                console.log(data)
             })
-                .then(response => response.json())
-                .then(result => console.log("delete task"))
+
+            localStorage.setItem("taskList", JSON.stringify(state.taskList));
         },
         updateTaskList(state, payload) {
             let index = state.taskList.map((el) => el.id).indexOf(payload.id);
             console.log("modules/taskList/updateTaskList/pos " + index)
 
-
-            // 2 цикл проверки что добавлено/удалено
             let idSubTask = []
             let task = state.taskList[index]
 
@@ -84,17 +96,31 @@ export default {
                 state.taskList[index].subTaskList = payload.subTaskList
                 state.taskList[index].performedList = payload.performedList
             }
+
+            const UPDATE_TASK = gql`
+                mutation updateTask($task: InputTask!, $id: [Int]){
+                    updateTask(task: $task, id: $id){
+                        str
+                    }
+                }
+            `
+            apolloClient.mutate({
+                mutation: UPDATE_TASK,
+                variables: {
+                    task: {
+                        id: payload.id,
+                        title: payload.title,
+                        subTaskList: payload.subTaskList,
+                        performedList: payload.performedList
+                    },
+                    id: idSubTask
+                }
+            }).then(( data ) => {
+                console.log(data)
+            })
+
             localStorage.setItem("taskList", JSON.stringify(state.taskList));
             console.log(idSubTask)
-            fetch(state.url + '/updateTask', {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json;charset=utf-8'
-                },
-                body: JSON.stringify({ task: state.taskList[index], id: idSubTask })
-            })
-                .then(response => response.json())
-                .then(result => console.log("update task"))
         },
 
         setLocalStorageList(state, payload) {
@@ -103,8 +129,10 @@ export default {
             state.count = Number(localStorage.getItem("count"))
         },
         fetchList(state, payload) {
-            state.taskList = payload.dataList
-            state.count = payload.count
+            console.log(payload)
+
+            state.taskList = payload.data.taskList
+            state.count = payload.data.count
             localStorage.setItem("taskList", JSON.stringify(state.taskList));
             localStorage.setItem("count", state.count);
         }
@@ -129,10 +157,28 @@ export default {
             console.log("modules/taskList/setLocalStorageList " + payload)
             store.commit('setLocalStorageList', payload)
         },
-        fetchList(store, payload) {
-            console.log(payload)
-            console.log("modules/taskList/fetchList " + payload)
-            store.commit('fetchList', payload)
+        fetchList(store) {
+            const GET_LIST = gql`
+                query {
+                    data{
+                        taskList{
+                            id,
+                            title,
+                            subTaskList,
+                            performedList
+                        },
+                    count
+                    }
+                }
+            `
+            apolloClient.query({
+                query: GET_LIST
+            }).then(({ data }) => {
+                console.log(data)
+                console.log("modules/taskList/fetchList ")
+                store.commit('fetchList', data)
+            })
+
         }
     },
 };

@@ -76,6 +76,7 @@ export default {
   data: () => ({
     taskId: null,
     action: "",
+    world: []
   }),
   computed: {
     ...mapGetters({
@@ -94,6 +95,7 @@ export default {
       changeAddDialog: "addMenu/changeDialog",
       setLocalStorageList: "taskList/setLocalStorageList",
       fetchList: "taskList/fetchList",
+      example: "taskList/example"
     }),
 
     createNewTask() {
@@ -113,13 +115,8 @@ export default {
   },
   mounted() {
     if (!localStorage.getItem("taskList")) {
-      fetch(this.url)
-        .then((response) => response.json())
-        .then((data) => this.fetchList(data));
-
-      // localStorage.setItem("taskList", JSON.stringify(this.taskList));
-      // localStorage.setItem("count", this.count);
-      // console.log("Set local storage data");
+      this.fetchList()
+      
     } else {
       this.setLocalStorageList(JSON.parse(localStorage.getItem("taskList")));
       console.log("Get local storage data");
@@ -127,7 +124,9 @@ export default {
 
     console.log("Vue/TaskList/mounted/taskList " + this.taskList);
   },
-  updated() {},
+  updated() {
+
+  },
 };
 </script>
 
