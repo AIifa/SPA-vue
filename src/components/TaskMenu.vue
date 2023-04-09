@@ -203,7 +203,6 @@ export default {
       this.redoStackAction = [];
 
       console.log("Vue/TaskMenu/pushBtn/index " + index);
-      // console.log("Vue/TaskMenu/pushBtn/!this.copyTask.performedList[index] " + !this.copyTask.performedList[index]);
     },
     changeInput(index) {
       // 2 undo
@@ -370,7 +369,6 @@ export default {
     this.copyTask = JSON.parse(JSON.stringify(this.getTask));
 
     console.log("Vue/TaskMenu/beforeMount/copyTask " + this.copyTask.subTaskList);
-    // console.log("Vue/TaskMenu/beforeMount/copyTask " + this.copyTask.performedList);
   },
   beforeUpdate() {
     let indexTask = this.taskList.map((el) => el.id).indexOf(this.taskId);
@@ -381,7 +379,6 @@ export default {
     }
   },
   updated() {
-    // console.log("Vue/TaskMenu/updated/checkbox " + this.copyTask.performedList);
   },
 };
 </script>
