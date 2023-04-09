@@ -1,0 +1,9 @@
+import gql from "graphql-tag"
+
+export const UPDATE_TASK = gql`
+    mutation updateTask($task: InputTask!, $id: [Int]){
+        updateTask(task: $task, id: $id){
+            res
+        }
+    }
+`

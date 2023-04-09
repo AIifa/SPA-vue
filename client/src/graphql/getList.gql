@@ -1,0 +1,15 @@
+import gql from "graphql-tag"
+
+export const GET_LIST = gql`
+    query {
+        data{
+            taskList{
+                id,
+                title,
+                subTaskList,
+                performedList
+            },
+        count
+        }
+    }
+`

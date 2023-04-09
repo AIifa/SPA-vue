@@ -1,184 +1,155 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const morgan = require('morgan');
-const mysql = require('mysql2');
+const express = require("express");
+const mysql = require("mysql2");
+const { ApolloServer, gql } = require("apollo-server-express")
+const { typeDefs } = require("./graphql/typeDefs")
+const { sqlGetList, sqlUpdTask, sqlUpdSubTasks, sqlGetIdSubTasks,
+    sqlDelTask, sqlDelSubTask, sqlInsTask, sqlInsSubTask } = require("./sql/request")
 
-const app = express();
-const urlencodedParser = express.urlencoded({ extended: false });
+require('dotenv').config();
 
-app.use(morgan('tiny'));
-app.use(cors());
-app.use(bodyParser.json());
-
-
-const port = 3000
+const port = process.env.PORT
 
 // поле для интеграции БД
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '12zxwsaqWQ#', // первая машина
-    // password: '12345678', // вторая машина
-    database: 'taskList'
+const connection = mysql.createPool({
+    connectionLimit: process.env.DB_CONNECTION_LIMIT,
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
 })
 
+const app = express();
 
-const sqlGetList =
-    `SELECT tasks.id, tasks.title, subtasks.subtask, subtasks.performed
-    FROM tasks left join subtasks
-    on subtasks.task_id = tasks.id;`;
+function getList() {
+    return new Promise(function (resolve, reject) {
+        connection.query(sqlGetList, (err, taskList) => {
+            if (err) throw reject(err)
+            // console.log(results)
 
-const sqlUpdTask =
-    `UPDATE tasks
-    SET title = ?
-    WHERE tasks.id = ?`;
+            // const taskList = results
+            const dataTask = []
+            for (let i = 0; i < taskList.length;) {
+                let id = taskList[i].id
+                let obj = { id: id, title: taskList[i].title, subTaskList: [], performedList: [] }
 
-const sqlUpdSubTasks =
-    `UPDATE subTasks
-    SET subTask = ?, performed = ?
-    WHERE id = ?`;
+                const subList = []
+                const performedList = []
 
-const sqlGetIdSubTasks =
-    `SELECT id
-    FROM subtasks
-    where subtasks.task_id = ?;`;
+                if (taskList[i].subtask == null) {
+                    i++
+                }
+                else {
+                    subList.push(taskList[i].subtask)
+                    performedList.push(Boolean(taskList[i].performed))
 
-const sqlDelTask =
-    `DELETE FROM tasks
-    WHERE id = ?;`
-
-const sqlDelSubTask =
-    `DELETE FROM subTasks
-    WHERE id = ?;`
-
-const sqlInsTask =
-    `INSERT INTO tasks
-    values 
-    (?, ?);`
-
-const sqlInsSubTask =
-    `INSERT INTO subTasks (subTask, performed, task_id)
-    values 
-    (?, ?, ?);`
-
-
-app.get('/', (req, res) => {
-    connection.query(sqlGetList, (err, results) => {
-        if (err) throw err
-        console.log(results)
-
-        const taskList = results
-        let dataTask = []
-        for (let i = 0; i < taskList.length;) {
-            let id = taskList[i].id
-            let obj = { id: id, title: taskList[i].title, subTaskList: [], performedList: [] }
-
-            let subList = []
-            let performedList = []
-
-            if (taskList[i].subtask == null) {
-                i++
-            }
-            else {
-                subList.push(taskList[i].subtask)
-                performedList.push(Boolean(taskList[i].performed))
-
-                for (let j = i + 1; j < taskList.length; j++) {
-                    if (id == taskList[j].id) {
-                        subList.push(taskList[j].subtask)
-                        performedList.push(Boolean(taskList[j].performed))
+                    for (let j = i + 1; j < taskList.length; j++) {
+                        if (id == taskList[j].id) {
+                            subList.push(taskList[j].subtask)
+                            performedList.push(Boolean(taskList[j].performed))
+                        }
                     }
+                }
+
+                obj.subTaskList = subList
+                obj.performedList = performedList
+                dataTask.push(obj)
+                i += obj.subTaskList.length
+            }
+            // console.log(dataTask)
+            dataTask.sort((a, b) => a.id - b.id);
+            resolve({ taskList: dataTask, count: dataTask[dataTask.length - 1].id })
+        });
+    })
+}
+
+function insertTask(task) {
+    return new Promise(function (resolve, reject) {
+        connection.query(sqlInsTask, [task.id, task.title], (err) => {
+            if (err) throw reject(err)
+
+            resolve({ res: "success" })
+        })
+    })
+}
+
+function deleteTask(data) {
+    return new Promise(function (resolve, reject) {
+        // console.log(data)
+        connection.query(sqlDelTask, [data.id], (err) => {
+            if (err) throw reject(err)
+        })
+
+        resolve({ res: "success" })
+    })
+}
+
+function updateTask(data) {
+    return new Promise(function (resolve, reject) {
+        let id = data.task.id;
+        let title = data.task.title;
+        // console.log(data)
+        connection.query(sqlUpdTask, [title, id], (err, data) => {
+            if (err) throw reject(err)
+        })
+
+        connection.query(sqlGetIdSubTasks, [id], (err, results) => {
+            if (err) throw reject(err)
+            // console.log(results)
+
+            // Удаление подзадач, которые были удалены на стороне клиента из БД
+            if (data.id.length) {
+                // console.log("удаление из БД")
+                for (let i = 0; i < data.id.length; i++) {
+                    connection.query(sqlDelSubTask, [results[data.id[i]].id], (err, data) => {
+                        if (err) throw reject(err)
+                    })
+                    results.splice(data.id[i], 1);
                 }
             }
 
-            obj.subTaskList = subList
-            obj.performedList = performedList
-            dataTask.push(obj)
-            i += obj.subTaskList.length
-        }
-        console.log(dataTask)
-        res.json({ dataList: dataTask, count: dataTask[dataTask.length - 1].id });
-    });
-});
-
-app.post("/updateTask", urlencodedParser, (req, res) => {
-    let id = req.body.task.id;
-    let title = req.body.task.title;
-    console.log(req.body)
-    connection.query(sqlUpdTask, [title, id], (err, data) => {
-        if (err) throw err
-    })
-
-    connection.query(sqlGetIdSubTasks, [id], (err, results) => {
-        if (err) throw err
-        console.log(results)
-
-        // Удаление из БД
-        if (req.body.id.length) {
-            console.log("удаление из БД")
-            for (let i = 0; i < req.body.id.length; i++) {
-                connection.query(sqlDelSubTask, [results[req.body.id[i]].id], (err, data) => {
-                    if (err) throw err
+            // Обновление БД
+            // console.log(results)
+            for (let i = 0; i < results.length; i++) {
+                let subTask = data.task.subTaskList[i]
+                let performed = data.task.performedList[i]
+                connection.query(sqlUpdSubTasks, [subTask, performed, results[i].id], (err, data) => {
+                    if (err) throw reject(err)
                 })
-                results.splice(req.body.id[i], 1);
             }
-        }
 
-        // Обновление БД
-        console.log(results)
-        for (let i = 0; i < results.length; i++) {
-            let subTask = req.body.task.subTaskList[i]
-            let performed = req.body.task.performedList[i]
-            connection.query(sqlUpdSubTasks, [subTask, performed, results[i].id], (err, data) => {
-                if (err) throw err
-            })
-        }
+            // Добавление в БД
+            for (let i = results.length; i < data.task.subTaskList.length; i++) {
+                let subTask = data.task.subTaskList[i]
+                let performed = data.task.performedList[i]
+                connection.query(sqlInsSubTask, [subTask, performed, id], (err, data) => {
+                    if (err) throw reject(err)
+                })
+            }
 
-        // Добавление в БД
-        for (let i = results.length; i < req.body.task.subTaskList.length; i++) {
-            let subTask = req.body.task.subTaskList[i]
-            let performed = req.body.task.performedList[i]
-            connection.query(sqlInsSubTask, [subTask, performed, id], (err, data) => {
-                if (err) throw err
-            })
-        }
+        })
 
+        resolve({ res: "success" })
     })
+}
+
+const resolvers = {
+    Query: {
+        data: () => getList(),
+    },
+    Mutation: {
+        updateTask: (_, data) => updateTask(data),
+        insertTask: (_, task) => insertTask(task),
+        deleteTask: (_, data) => deleteTask(data)
+    }
+}
+
+const server = new ApolloServer({
+    typeDefs,
+    resolvers,
 })
 
-app.post("/deleteTask", urlencodedParser, (req, res) => {
-    // Удалить задание и подзадачи
-    let id = req.body.id;
-    connection.query(sqlGetIdSubTasks, [id], (err, results) => {
-        if (err) throw err
-        console.log(results)
-
-        for (let i = 0; i < results.length; i++) {
-            connection.query(sqlDelSubTask, [results[i].id], (err, data) => {
-                if (err) throw err
-            })
-        }
-    })
-    connection.query(sqlDelTask, [id], (err, data) => {
-        if (err) throw err
-    })
-})
-
-app.post("/deleteSubTask", urlencodedParser, (req, res) => {
-    let subTask = req.body.subTask;
-    console.log(req.body)
-    connection.query(sqlDelSubTask, [subTask], (err, data) => {
-        if (err) throw err
-    })
-})
-
-
-app.post("/insertTask", urlencodedParser, (req, res) => {
-    connection.query(sqlInsTask, [req.body.id, req.body.title], (err, data) => {
-        if (err) throw err
-    })
-})
+server.start()
+server.applyMiddleware({ app });
 
 
 app.listen(port, () => {
