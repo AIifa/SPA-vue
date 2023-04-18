@@ -40,13 +40,12 @@ export default {
     }),
     yesAcception() {
       if (this.action == "удалить") {
-        this.delTask(this.taskId);
-        this.$emit("closeMenuDialog", false);
+        this.delTask(this.taskId);        
       } else if (this.action == "отменить") {
-        this.$emit("closeMenuDialog", false);
       }
+      this.$emit("closeMenuDialog", false);
       this.$emit("closeDelDialog", false);
-    },
+    }
   },
 };
 </script>

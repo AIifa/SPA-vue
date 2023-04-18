@@ -1,8 +1,8 @@
 module.exports.sqlGetList =
-    `SELECT tasks.id, tasks.title, subtasks.subtask, subtasks.performed
-    FROM tasks left join subtasks
-    on subtasks.task_id = tasks.id
-    order by subtasks.id;`;
+    `SELECT tasks.id, tasks.title, subTasks.subtask, subTasks.performed
+    FROM tasks left join subTasks
+    on subTasks.task_id = tasks.id
+    order by subTasks.id;`;
 
 module.exports.sqlUpdTask =
     `UPDATE tasks
@@ -16,8 +16,8 @@ module.exports.sqlUpdSubTasks =
 
 module.exports.sqlGetIdSubTasks =
     `SELECT id
-    FROM subtasks
-    where subtasks.task_id = ?;`;
+    FROM subTasks
+    where subTasks.task_id = ?;`;
 
 module.exports.sqlDelTask =
     `DELETE FROM tasks

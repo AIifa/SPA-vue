@@ -34,7 +34,7 @@
                   :ripple="false"
                   color="info"
                   v-model="task.performedList[n - 1]"
-                  :label="`${task.subTaskList[n - 1]}`"
+                  :label="task.subTaskList[n - 1]"
                 ></v-checkbox>
               </v-row>
               <v-row v-if="task.subTaskList.length > 2" justify="center"

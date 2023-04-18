@@ -23,7 +23,7 @@ const app = express();
 function getList() {
     return new Promise(function (resolve, reject) {
         connection.query(sqlGetList, (err, taskList) => {
-            if (err) throw reject(err)
+            if (err) throw err
             // console.log(results)
 
             // const taskList = results
@@ -65,7 +65,7 @@ function getList() {
 function insertTask(task) {
     return new Promise(function (resolve, reject) {
         connection.query(sqlInsTask, [task.id, task.title], (err) => {
-            if (err) throw reject(err)
+            if (err) throw err
 
             resolve({ res: "success" })
         })
@@ -76,7 +76,7 @@ function deleteTask(data) {
     return new Promise(function (resolve, reject) {
         // console.log(data)
         connection.query(sqlDelTask, [data.id], (err) => {
-            if (err) throw reject(err)
+            if (err) throw err
         })
 
         resolve({ res: "success" })
@@ -89,11 +89,11 @@ function updateTask(data) {
         let title = data.task.title;
         // console.log(data)
         connection.query(sqlUpdTask, [title, id], (err, data) => {
-            if (err) throw reject(err)
+            if (err) throw err
         })
 
         connection.query(sqlGetIdSubTasks, [id], (err, results) => {
-            if (err) throw reject(err)
+            if (err) throw err
             // console.log(results)
 
             // Удаление подзадач, которые были удалены на стороне клиента из БД
@@ -101,7 +101,7 @@ function updateTask(data) {
                 // console.log("удаление из БД")
                 for (let i = 0; i < data.id.length; i++) {
                     connection.query(sqlDelSubTask, [results[data.id[i]].id], (err, data) => {
-                        if (err) throw reject(err)
+                        if (err) throw err
                     })
                     results.splice(data.id[i], 1);
                 }
@@ -113,7 +113,7 @@ function updateTask(data) {
                 let subTask = data.task.subTaskList[i]
                 let performed = data.task.performedList[i]
                 connection.query(sqlUpdSubTasks, [subTask, performed, results[i].id], (err, data) => {
-                    if (err) throw reject(err)
+                    if (err) throw err
                 })
             }
 
@@ -122,7 +122,7 @@ function updateTask(data) {
                 let subTask = data.task.subTaskList[i]
                 let performed = data.task.performedList[i]
                 connection.query(sqlInsSubTask, [subTask, performed, id], (err, data) => {
-                    if (err) throw reject(err)
+                    if (err) throw err
                 })
             }
 
