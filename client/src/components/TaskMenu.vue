@@ -1,6 +1,6 @@
 <template>
   <v-row justify="center" v-if="menuDialog">
-    <v-dialog v-model="menuDialog" persistent scrollable max-width="660px">
+    <v-dialog v-model="dialog" persistent scrollable max-width="660px">
       <v-card height="80vh">
         <v-card-title>
           <v-btn
@@ -108,15 +108,13 @@
       v-if="delDialog"
       :delDialog="delDialog"
       @closeDelDialog="delDialog = $event"
-      @closeMenuDialog="$emit('closeMenuDialog', $event)"
+      @closeMenuDialog="dialog = $event"
       :taskId="taskId"
       :action="action"
     ></del-dialog>
   </v-row>
 </template>
-  
-  
-  
+
 <script>
 import { mapGetters, mapActions } from "vuex";
 import DelDialog from "./DelDialog.vue";
@@ -150,6 +148,14 @@ export default {
 
       return this.taskList[indexTask];
     },
+    dialog: {
+      get() {
+        return this.menuDialog;
+      },
+      set(value) {
+        this.$emit("closeMenuDialog", value);
+      },
+    },
   },
   methods: {
     ...mapActions({
@@ -161,7 +167,7 @@ export default {
     },
     saveTask() {
       this.updateTaskList(this.copyTask);
-      this.$emit("closeMenuDialog", false);
+      this.dialog = false;
     },
     cancelTask() {
       this.action = "отменить";

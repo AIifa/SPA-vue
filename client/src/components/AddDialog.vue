@@ -1,6 +1,6 @@
 <template>
   <v-row justify="center">
-    <v-dialog v-model="addDialog" persistent max-width="370">
+    <v-dialog v-model="dialog" persistent max-width="370">
       <v-card>
         <v-card-title class="text-h5"> Введите название задания </v-card-title>
         <v-text-field
@@ -11,9 +11,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" text @click="saveTask"> Сохранить </v-btn>
-          <v-btn color="error" text @click="$emit('closeAddDialog', false)">
-            Отмена
-          </v-btn>
+          <v-btn color="error" text @click="dialog = false"> Отмена </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -38,7 +36,17 @@ export default {
     saveTask() {
       this.addNewTask(this.taskName);
 
-      this.$emit("closeAddDialog", false);
+      this.dialog = false;
+    },
+  },
+  computed: {
+    dialog: {
+      get() {
+        return this.addDialog;
+      },
+      set(value) {
+        this.$emit("closeAddDialog", value);
+      },
     },
   },
 };
