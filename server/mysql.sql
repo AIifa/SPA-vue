@@ -1,5 +1,5 @@
---Сброс бд до начального уровня
---drop schema taskList;
+-- Сброс бд до начального уровня
+-- drop schema taskList;
 
 create database taskList;
 
@@ -22,15 +22,15 @@ foreign key (task_id) references tasks (id) ON UPDATE CASCADE ON DELETE CASCADE
 
 insert into tasks
 values
-(1, '1'),
-(2, '2'),
-(3, '3');
+(1, 'Дела в выходные'),
+(2, 'Список покупок'),
+(3, 'Уборка');
 
 insert into subTasks (subTask, performed, task_id)
 values
-('1.1', false, 1),
-('2.1', false, 2),
-('2.2', false, 2),
-('3.1', false, 3),
-('3.2', false, 3),
-('3.3', false, 3);
+('Отдых', false, 1),
+('Котлеты', false, 2),
+('Пюре', false, 2),
+('Мытьё посуды', false, 3),
+('Вынос мусора', false, 3),
+('Стирка', false, 3);

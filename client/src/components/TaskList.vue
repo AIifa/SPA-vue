@@ -9,37 +9,27 @@
                 <v-card-title> {{ task.title }}</v-card-title>
                 <v-spacer></v-spacer>
 
-                <v-btn
-                  class="ma-1"
-                  icon
-                  color="blue"
-                  @click="changeTask(task.id)"
-                >
+                <v-btn class="ma-1" icon color="blue" @click="changeTask(task.id)">
                   <v-icon>mdi-pencil</v-icon>
                 </v-btn>
-                <v-btn
-                  class="ma-1"
-                  icon
-                  color="red"
-                  @click="openDeleteTask(task.id)"
-                >
+                <v-btn class="ma-1" icon color="red" @click="openDeleteTask(task.id)">
                   <v-icon>mdi-delete</v-icon>
                 </v-btn>
               </v-row>
-              <v-row v-for="n in 2" :key="n">
-                <v-checkbox
-                  class="cursor-default"
-                  v-if="task.subTaskList[n - 1]"
-                  readonly
-                  :ripple="false"
-                  color="info"
-                  v-model="task.performedList[n - 1]"
-                  :label="task.subTaskList[n - 1]"
-                ></v-checkbox>
+
+              <v-row v-for="ind in hideShowSubtasks[index]" :key="ind + task.id">
+                <v-checkbox class="cursor-default" v-if="task.subTaskList[ind - 1]" readonly :ripple="false" color="info"
+                  v-model="task.performedList[ind - 1]" :label="task.subTaskList[ind - 1]"></v-checkbox>
               </v-row>
-              <v-row v-if="task.subTaskList.length > 2" justify="center"
-                >...</v-row
-              >
+
+              <v-row v-if="task.subTaskList.length > 2 && hideShowSubtasks[index] == 2" justify="center"
+                @click="hideShowListBtn(index, true)">
+                <v-icon>mdi-arrow-down</v-icon>
+              </v-row>
+              <v-row v-else-if="task.subTaskList.length > 2" justify="center" @click="hideShowListBtn(index, false)">
+                <v-icon>mdi-arrow-up</v-icon>
+              </v-row>
+
             </v-container>
           </v-row>
         </v-container>
@@ -51,24 +41,11 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-    <task-menu
-      v-if="menuDialog"
-      :menuDialog="menuDialog"
-      @closeMenuDialog="menuDialog = $event"
-      :taskId="taskId"
-    ></task-menu>
-    <add-dialog
-      v-if="addDialog"
-      :addDialog="addDialog"
-      @closeAddDialog="addDialog = $event"
-    ></add-dialog>
-    <del-dialog
-      v-if="delDialog"
-      :delDialog="delDialog"
-      @closeDelDialog="delDialog = $event"
-      :taskId="taskId"
-      :action="action"
-    ></del-dialog>
+    <task-menu v-if="menuDialog" :menuDialog="menuDialog" @closeMenuDialog="menuDialog = $event"
+      :taskId="taskId"></task-menu>
+    <add-dialog v-if="addDialog" :addDialog="addDialog" @closeAddDialog="addDialog = $event"></add-dialog>
+    <del-dialog v-if="delDialog" :delDialog="delDialog" @closeDelDialog="delDialog = $event" :taskId="taskId"
+      :action="action"></del-dialog>
   </v-main>
 </template>
 
@@ -94,12 +71,16 @@ export default {
     menuDialog: false,
     addDialog: false,
     delDialog: false,
+    listHideShowSubtasks: [],
   }),
   computed: {
     ...mapGetters({
       count: "taskList/count",
       taskList: "taskList/taskList",
     }),
+    hideShowSubtasks() {
+      return this.listHideShowSubtasks
+    }
   },
   methods: {
     ...mapActions({
@@ -115,10 +96,20 @@ export default {
       this.action = "удалить";
       this.delDialog = true;
     },
+    hideShowListBtn(index, show) {
+      if (show)
+        this.listHideShowSubtasks.splice(index, 1, this.taskList[index].subTaskList.length)
+      else
+        this.listHideShowSubtasks.splice(index, 1, 2)
+    }
   },
   mounted() {
     if (!localStorage.getItem("taskList")) {
-      this.fetchList();
+      this.fetchList().then(response => {
+        for (let i = 0; i < response; i++) {
+          this.listHideShowSubtasks.splice(i, 0, 2)
+        }
+      })
     } else {
       this.setLocalStorageList(JSON.parse(localStorage.getItem("taskList")));
     }

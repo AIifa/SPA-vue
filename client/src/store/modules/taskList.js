@@ -118,12 +118,15 @@ export default {
             store.commit("setLocalStorageList", payload)
         },
         fetchList(store) {
-            apolloClient.query({
+            return new Promise((resolve, reject) => {
+                apolloClient.query({
                 query: GET_LIST
             }).then(({ data }) => {
                 store.commit("fetchList", data)
+                resolve(data.data.taskList.length)
             })
-
+            })
+            
         }
     },
 };
