@@ -35,7 +35,7 @@ export default {
     }),
     saveTask() {
       this.addNewTask(this.taskName);
-
+      this.$emit("pushListHideShow")
       this.dialog = false;
     },
   },

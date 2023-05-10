@@ -111,6 +111,7 @@
       @closeMenuDialog="dialog = $event"
       :taskId="taskId"
       :action="action"
+      @popListHideShow="popListHideShow()"
     ></del-dialog>
   </v-row>
 </template>
@@ -161,6 +162,9 @@ export default {
     ...mapActions({
       updateTaskList: "taskList/updateTaskList",
     }),
+    popListHideShow() {
+      this.$emit("popListHideShow")
+    },
     openDeleteTask() {
       this.action = "удалить";
       this.delDialog = true;

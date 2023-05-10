@@ -36,16 +36,17 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn class="ma-1" fab dark color="green" @click="addDialog = true">
+        <v-btn class="ma-1" fab dark color="green" @click="addNewTask()">
           <v-icon dark>mdi-plus</v-icon>
         </v-btn>
       </v-card-actions>
     </v-card>
-    <task-menu v-if="menuDialog" :menuDialog="menuDialog" @closeMenuDialog="menuDialog = $event"
-      :taskId="taskId"></task-menu>
-    <add-dialog v-if="addDialog" :addDialog="addDialog" @closeAddDialog="addDialog = $event"></add-dialog>
+    <task-menu v-if="menuDialog" :menuDialog="menuDialog" @closeMenuDialog="menuDialog = $event" :taskId="taskId"
+      @popListHideShow="popListHideShow(taskId)"></task-menu>
+    <add-dialog v-if="addDialog" :addDialog="addDialog" @closeAddDialog="addDialog = $event"
+      @pushListHideShow="pushListHideShow()"></add-dialog>
     <del-dialog v-if="delDialog" :delDialog="delDialog" @closeDelDialog="delDialog = $event" :taskId="taskId"
-      :action="action"></del-dialog>
+      :action="action" @popListHideShow="popListHideShow(taskId)"></del-dialog>
   </v-main>
 </template>
 
@@ -96,11 +97,20 @@ export default {
       this.action = "удалить";
       this.delDialog = true;
     },
+    addNewTask() {
+      this.addDialog = true
+    },
     hideShowListBtn(index, show) {
       if (show)
         this.listHideShowSubtasks.splice(index, 1, this.taskList[index].subTaskList.length)
       else
         this.listHideShowSubtasks.splice(index, 1, 2)
+    },
+    popListHideShow(id) {
+      this.listHideShowSubtasks.splice(this.taskList.map((el) => el.id).indexOf(id), 1)
+    },
+    pushListHideShow() {
+      this.listHideShowSubtasks.push(2);
     }
   },
   mounted() {
@@ -112,6 +122,9 @@ export default {
       })
     } else {
       this.setLocalStorageList(JSON.parse(localStorage.getItem("taskList")));
+      for (let i = 0; i < this.taskList.length; i++) {
+        this.listHideShowSubtasks.splice(i, 0, 2)
+      }
     }
   },
 };

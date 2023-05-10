@@ -36,7 +36,6 @@ export default {
                 }
             }).then((res) => {
                 if (res.data.insertTask.res == "success") {
-                    console.log(res)
                     localStorage.setItem("taskList", JSON.stringify(state.taskList));
                     localStorage.setItem("count", state.count);
                 }

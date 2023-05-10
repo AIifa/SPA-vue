@@ -34,6 +34,7 @@ export default {
     }),
     yesAcception() {
       if (this.action == "удалить") {
+        this.$emit("popListHideShow");
         this.delTask(this.taskId);
       } else if (this.action == "отменить") {
       }
